@@ -33,6 +33,7 @@ function General({settings, commit}) {
         <label>書寫方式<select className={field} value={settings.writingMode} onChange={e => set({writingMode: e.target.value})}><Options rows={MODES} /></select></label>
         <label>字形提示<select className={field} value={settings.writingHint} onChange={e => set({writingHint: e.target.value})}><Options rows={HINTS} /></select></label>
       </div>
+      <div><span className="font-bold">書寫前看範字</span><div className="mt-1 flex flex-wrap items-center gap-2" role="group" aria-label="書寫前看範字">{[[0, '關閉'], [3, '3 秒'], [5, '5 秒'], [7, '7 秒'], [10, '10 秒']].map(([seconds, label]) => <button type="button" key={seconds} aria-pressed={settings.writingObserveSeconds === seconds} className={btn + (settings.writingObserveSeconds === seconds ? ' border-blue-700 bg-blue-100 text-blue-800' : '')} onClick={() => set({writingObserveSeconds: seconds})}>{label}</button>)}<label className="flex items-center gap-2">自訂<input type="number" min="1" max="300" aria-label="自訂範字秒數" className="w-24 rounded-xl border-2 bg-white p-2" value={settings.writingObserveSeconds || ''} placeholder="秒" onChange={e => set({writingObserveSeconds: Math.max(0, Math.min(300, Math.floor(Number(e.target.value) || 0)))})} />秒</label></div></div>
       {check('simpleMode', '預設使用簡易畫面')}
       {check('lockPractice', '鎖定練習方式，學生不能自己更改')}
     </section>
