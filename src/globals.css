@@ -545,3 +545,14 @@ details[open] > summary { margin-bottom: .25rem; }
 header nav{margin-left:auto}
 .se365-logo{opacity:.85;flex:none}
 .free-completion-message:empty{display:none}
+/* 主要按鈕：開始練習、下一個字 */
+.free-start-button{display:flex;width:100%;align-items:center;justify-content:center;gap:.75rem;border-radius:1rem;background:#6d28d9;color:#fff;font-size:1.6rem;font-weight:700;padding:1rem 1.25rem;box-shadow:0 4px 0 #4c1d95}
+.free-start-button span{font-size:1rem;font-weight:400;opacity:.9}
+.free-start-button:hover{background:#5b21b6}
+.free-start-button:disabled{opacity:.4}
+.free-next-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.75rem;font-size:1.4rem;color:#2e1065}
+.free-next-button{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-width:14rem;border-radius:1rem;background:#6d28d9;color:#fff;font-size:1.5rem;font-weight:700;padding:.8rem 1.5rem;box-shadow:0 4px 0 #4c1d95}
+.free-next-button:hover{background:#5b21b6}
+.free-next-button:disabled{opacity:.4}
+.free-next-button.free-next-secondary{background:#fff;color:#4c1d95;border:2px solid #6d28d9;box-shadow:none;min-width:0}
+.free-practice-writing[data-simple="true"] .free-next-button{font-size:1.5rem}

@@ -3,6 +3,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import QRCode from 'qrcode';
 import TeachingContent from './TeachingContent';
+import BookPicker from './BookPicker';
 import TeachingSettings from './TeachingSettings';
 import {validateTeachingEntry} from './curriculum-settings';
 import {getBook, getLessonMeta} from './curriculum-source';
@@ -16,7 +17,6 @@ const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'],
 const STEPS = [['writing', '直接書寫'], ['parts', '畫部件、組部件、書寫']], MODES = [['free', '自由書寫'], ['guided', '筆順引導']], HINTS = [['none', '不顯示底字'], ['pale', '淡色底字'], ['partial', '部分字形']];
 const lessonLabel = id => `第 ${getLessonMeta(id)?.number || ''} 課・${getLessonMeta(id)?.title || id}`;
 const Options = ({rows}) => rows.map(([value, label]) => <option key={value} value={value}>{label}</option>);
-const BookOptions = () => practiceBooks.map(book => <option key={book.id} value={book.id}>{book.label}</option>);
 
 function General({settings, commit}) {
   const [pin, setPin] = useState(''), [note, setNote] = useState('');
@@ -38,8 +38,8 @@ function General({settings, commit}) {
     </section>
     <section className={card}><h3 className="text-xl font-bold">學生打開時的版本與課次</h3>
       
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label>教材版本<select className={field} value={settings.defaultBookId} onChange={e => set({defaultBookId: e.target.value, defaultLessonId: ''})}><option value="">不指定</option><BookOptions /></select></label>
+      <BookPicker allowEmpty value={settings.defaultBookId} onChange={id => set({defaultBookId: id, defaultLessonId: ''})} />
+      <div>
         <label>課次<select className={field} disabled={!settings.defaultBookId} value={settings.defaultLessonId} onChange={e => set({defaultLessonId: e.target.value})}><option value="">不指定</option><option value="all">整冊版本生字</option>{settings.defaultBookId && getBook(settings.defaultBookId).lessons.map(id => <option key={id} value={id}>{lessonLabel(id)}</option>)}</select></label>
       </div>
     </section>
@@ -91,9 +91,9 @@ function Links({settings}) {
   const copy = async () => { try { await navigator.clipboard.writeText(url); setNote('已複製連結。'); } catch { setNote('無法自動複製，請長按或選取上方連結手動複製。'); } };
   return <section className={card}><h3 className="text-xl font-bold">派課連結與 QR Code</h3>
     
+    {!chosenList && <BookPicker value={book} onChange={id => { setBook(id); setLesson(''); }} />}
     <div className="grid gap-3 sm:grid-cols-3">
       <label>老師字單<select className={field} value={list} onChange={e => setList(e.target.value)}><option value="">不用字單，選課次</option>{settings.customLists.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-      <label>教材版本<select className={field} disabled={!!chosenList} value={book} onChange={e => { setBook(e.target.value); setLesson(''); }}><BookOptions /></select></label>
       <label>課次<select className={field} disabled={!!chosenList} value={lesson} onChange={e => setLesson(e.target.value)}><option value="">只指定版本</option><option value="all">整冊版本生字</option>{getBook(book).lessons.map(id => <option key={id} value={id}>{lessonLabel(id)}</option>)}</select></label>
       <label>練習步驟<select className={field} value={steps} onChange={e => setSteps(e.target.value)}><option value="">不指定</option><Options rows={STEPS} /></select></label>
       <label>書寫方式<select className={field} value={mode} onChange={e => setMode(e.target.value)}><option value="">不指定</option><Options rows={MODES} /></select></label>
