@@ -556,3 +556,5 @@ header nav{margin-left:auto}
 .free-next-button:disabled{opacity:.4}
 .free-next-button.free-next-secondary{background:#fff;color:#4c1d95;border:2px solid #6d28d9;box-shadow:none;min-width:0}
 .free-practice-writing[data-simple="true"] .free-next-button{font-size:1.5rem}
+/* 目標字的空格：只給注音，不顯示國字 */
+.wz-blank{display:inline-block;width:1em;height:1em;border:2px dashed #1d4ed8;border-radius:.12em;background:#eff6ff}
