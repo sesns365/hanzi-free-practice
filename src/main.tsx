@@ -102,6 +102,13 @@ function App() {
       </header>
       <main className={'mx-auto max-w-6xl ' + (compact ? 'p-2' : 'p-4 sm:p-8')}>{body}</main>
       <footer className="py-6 text-center text-base text-slate-600">
+        <nav aria-label="相關網站" className="mb-2 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3">
+          <span>相關網站：</span>
+          <a className="underline" href="https://sesns365.github.io/copybook/" target="_blank" rel="noreferrer">直式生字學習單製作工具</a>
+          <span aria-hidden="true">·</span>
+          <a className="underline" href="https://character-writing-support.sesns365.chatgpt.site/" target="_blank" rel="noreferrer">生字書寫練習網</a>
+        </nav>
+        <br />
         <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3">
           <span>由特工 365 製作</span>
           <span aria-hidden="true">·</span>
