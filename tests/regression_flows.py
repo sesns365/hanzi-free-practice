@@ -15,7 +15,7 @@ try:
     pg.goto(U); pg.wait_for_selector('section[aria-label="自由練習選字"]')
     step('學生看不到老師專區按鈕', pg.locator('header button:has-text("老師專區")').count()==0)
     step('標題與圖示', '自由練字板' in pg.title() and pg.locator('header img').count()==2)
-    pg.locator('footer button:has-text("老師專區")').click(); pg.wait_for_selector('section[aria-label="老師專區"]')
+    pg.locator('footer button:has-text("老師專區")').click(); pg.wait_for_selector('section[aria-label="老師專區"]'); pg.evaluate("document.querySelectorAll('section[aria-label=老師專區] details').forEach(d=>d.open=true)")
     step('未設密碼可進入並有提醒', pg.locator('text=尚未設定老師密碼，學生也進得來').count()==1)
     pg.locator('select').nth(1).select_option('guided')   # 書寫方式
     pg.locator('label:has-text("預設使用簡易畫面") input').check()
@@ -47,7 +47,7 @@ try:
     # 密碼
     pg.locator('footer button:has-text("老師專區")').click(); pg.locator('input[type=password]').fill('9999'); pg.get_by_role('button',name='進入').click()
     step('錯誤密碼擋下', pg.locator('text=密碼不對').count()==1)
-    pg.locator('input[type=password]').fill('1234'); pg.get_by_role('button',name='進入').click(); pg.wait_for_selector('section[aria-label="老師專區"]')
+    pg.locator('input[type=password]').fill('1234'); pg.get_by_role('button',name='進入').click(); pg.wait_for_selector('section[aria-label="老師專區"]'); pg.evaluate("document.querySelectorAll('section[aria-label=老師專區] details').forEach(d=>d.open=true)")
     step('正確密碼進入', True)
     # 改成自由書寫、不鎖定，測自動保存與進度
     pg.locator('select').nth(1).select_option('free'); pg.locator('label:has-text("鎖定練習方式") input').uncheck()

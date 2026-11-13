@@ -14,7 +14,7 @@ try:
         pg.mouse.move(x+w*.3,y+h*.3); pg.mouse.down(); pg.mouse.move(x+w*.6,y+h*.6,steps=8); pg.mouse.up(); pg.wait_for_timeout(300)
     def pick(pg,lesson=2):
         pg.get_by_role('button',name='康軒').click(); pg.get_by_role('button',name='二年級').click(); pg.locator('.lesson-options button').nth(lesson).click()
-    def teacher(pg): pg.locator('footer button:has-text("老師專區")').click(); pg.wait_for_selector('section[aria-label="老師專區"]')
+    def teacher(pg): pg.locator('footer button:has-text("老師專區")').click(); pg.wait_for_selector('section[aria-label="老師專區"]'); pg.evaluate("document.querySelectorAll('section[aria-label=老師專區] details').forEach(d=>d.open=true)")
     star=lambda pg: pg.locator('.free-progress-list summary').first.inner_text()
     # ── 自己寫（預設）：課次按鈕、畫面高度、換字得星
     pg=fresh(); pg.goto(U); pick(pg); step('課次按鈕', pg.locator('.lesson-options button[aria-pressed=true]').count()==1)
@@ -55,7 +55,7 @@ try:
     for label in ['顯示整字','查字典']: pg4.locator(f'label:has-text("{label}") input').uncheck()
     pg4.locator('label:has-text("寫了才能換下一個字") input').check(); pg4.locator('[aria-label="書寫前看範字"] button:has-text("關閉")').click()
     pg4.screenshot(path='/home/claude/g4.png',full_page=True)
-    step('逐字編輯器用版本按鈕', (pg4.get_by_role('tab',name='逐字教材與讀音').click() or True) and pg4.locator('.book-picker').count()==1); pg4.get_by_role('tab',name='練習預設').click()
+    step('逐字編輯器用版本按鈕', (pg4.get_by_role('tab',name='逐字教材與讀音').click() or True) and pg4.locator('.book-picker').count()==1); pg4.get_by_role('tab',name='練習預設').click(); pg4.evaluate("document.querySelectorAll('section[aria-label=老師專區] details').forEach(d=>d.open=true)")
     pg4.get_by_role('button',name='回到練習').click(); pg4.goto(U+'?chars=山水&mode=free'); pg4.wait_for_selector('.writing-surface'); pg4.wait_for_timeout(1500)
     step('老師關閉顯示整字與查字典', pg4.get_by_role('button',name='顯示整字').count()==0 and not pg4.locator('details[aria-label$="延伸查詢"]').is_visible())
     step('還沒寫不能換下一個字', pg4.get_by_role('button',name='下一個字').is_disabled()); draw(pg4); step('寫了就能換', not pg4.get_by_role('button',name='下一個字').is_disabled())

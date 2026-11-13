@@ -18,6 +18,9 @@ const card = 'space-y-4 rounded-2xl border bg-white p-5';
 const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'], ['parts', '逐字部件與部首答案'], ['strokes', '逐字筆畫名稱'], ['lists', '自訂字單'], ['links', '派課連結'], ['file', '設定檔與共用']];
 const STEPS = [['writing', '只寫字'], ['parts', '先畫部件、組部件，再寫字']], MODES = [['free', '自己寫'], ['guided', '跟著筆順寫']], HINTS = [['none', '不顯示底字'], ['pale', '淡色底字'], ['partial', '部分字形']];
 const lessonLabel = id => `第 ${getLessonMeta(id)?.number || ''} 課・${getLessonMeta(id)?.title || id}`;
+const label = (rows, value) => rows.find(([id]) => id === value)?.[1] || '';
+// 可收合的設定區塊：收起來時在標題右邊顯示目前的設定，版面不會太長。
+const Fold = ({title, status = '', open = false, children}) => <details className="rounded-2xl border bg-white" open={open}><summary className="flex cursor-pointer flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 py-4 text-xl font-bold">{title}{status && <span className="text-base font-normal text-slate-600">{status}</span>}</summary><div className="space-y-4 border-t p-5">{children}</div></details>;
 const Options = ({rows}) => rows.map(([value, label]) => <option key={value} value={value}>{label}</option>);
 
 function General({settings, commit}) {
@@ -29,7 +32,7 @@ function General({settings, commit}) {
     set({pinHash: pinHash(pin)}); setPin(''); setNote('老師密碼已設定。之後進入老師專區需要輸入密碼。');
   };
   return <div className="space-y-5">
-    <section className={card}><h3 className="text-xl font-bold">學生打開時的練習方式</h3>
+    <Fold title="學生打開時的練習方式" status={label(STEPS, settings.practiceSteps) + '・' + label(MODES, settings.writingMode) + '・' + label(HINTS, settings.writingHint) + (settings.lockPractice ? '・已鎖定' : '')} open>
       <div className="grid gap-3 sm:grid-cols-3">
         <label>練習步驟<select className={field} value={settings.practiceSteps} onChange={e => set({practiceSteps: e.target.value})}><Options rows={STEPS} /></select></label>
         <label>書寫方式<select className={field} value={settings.writingMode} onChange={e => set({writingMode: e.target.value})}><Options rows={MODES} /></select></label>
@@ -39,30 +42,30 @@ function General({settings, commit}) {
       {check('simpleMode', '預設使用簡易畫面')}
       {check('lockPractice', '鎖定練習方式，學生不能自己更改')}
       {check('requireWriting', '寫了才能換下一個字')}
-    </section>
-    <section className={card}><h3 className="text-xl font-bold">筆順</h3>
+    </Fold>
+    <Fold title="筆順" status={SPEED_LABELS[ANIMATION_SPEEDS.indexOf(settings.animationSpeed)] + (settings.strokeNarration ? '・報讀筆畫' : '')}>
       <label className="block w-56">筆順速度<select aria-label="筆順速度預設" className={field} value={settings.animationSpeed} onChange={e => set({animationSpeed: Number(e.target.value)})}>{ANIMATION_SPEEDS.map((speed, i) => <option key={speed} value={speed}>{SPEED_LABELS[i]}</option>)}</select></label>
       {check('strokeNarration', '播放筆順時報讀筆畫名稱', '例如「一，橫」「二，撇」。名稱可在「逐字筆畫名稱」更正。')}
-    </section>
-    <section className={card}><h3 className="text-xl font-bold">學生可以用的提示</h3>
+    </Fold>
+    <Fold title="學生可以用的提示" status={'開啟 ' + ['allowFullCharacter', 'allowPale', 'allowMoreHint', 'allowNextStroke', 'allowAnimation', 'showDictionary'].filter(key => settings[key]).length + '／6'}>
       <div className="grid gap-3 sm:grid-cols-2">{check('allowFullCharacter', '顯示整字')}{check('allowPale', '淡色底字')}{check('allowMoreHint', '部分字形提示')}{check('allowNextStroke', '提示下一筆')}{check('allowAnimation', '播放筆順')}{check('showDictionary', '查字典（會連到教育部網站）')}</div>
-    </section>
-    <section className={card}><h3 className="text-xl font-bold">學生打開時的版本與課次</h3>
+    </Fold>
+    <Fold title="學生打開時的版本與課次" status={settings.defaultBookId ? getBook(settings.defaultBookId).label + (settings.defaultLessonId === 'all' ? '・整冊' : settings.defaultLessonId ? '・' + lessonLabel(settings.defaultLessonId) : '') : '不指定'}>
       
       <BookPicker allowEmpty value={settings.defaultBookId} onChange={id => set({defaultBookId: id, defaultLessonId: ''})} />
       <div>
         <label>課次<select className={field} disabled={!settings.defaultBookId} value={settings.defaultLessonId} onChange={e => set({defaultLessonId: e.target.value})}><option value="">不指定</option><option value="all">整冊版本生字</option>{settings.defaultBookId && getBook(settings.defaultBookId).lessons.map(id => <option key={id} value={id}>{lessonLabel(id)}</option>)}</select></label>
       </div>
-    </section>
-    <section className={card}><h3 className="text-xl font-bold">共用載具：用座號分開紀錄</h3>
+    </Fold>
+    <Fold title="共用載具：用座號分開紀錄" status={settings.seatCount ? settings.seatCount + ' 人' : '不分座號'}>
       <p className="text-sm text-slate-600">學生先點座號，紀錄各自分開。0 表示不分座號。</p>
       <button type="button" className={btn} onClick={async () => { setNote('正在製作字跡總表…'); try { const count = await downloadAllSeatsSheet(settings.seatCount); setNote(count ? `已下載 ${count} 位的字跡總表。` : '這台載具還沒有保存的字跡。'); } catch { setNote('字跡總表製作失敗，請再試一次。'); } }}>下載這台載具所有座號的字跡總表</button>
       <label className="block w-40">班級人數<input type="number" min="0" max="60" className={field} value={settings.seatCount} onChange={e => set({seatCount: Math.max(0, Math.min(60, Math.floor(Number(e.target.value) || 0)))})} /></label>
-    </section>
-    <section className={card}><h3 className="text-xl font-bold">老師密碼</h3>
+    </Fold>
+    <Fold title="老師密碼" status={settings.pinHash ? '已設定' : '尚未設定'}>
       <p className="text-sm text-slate-600">{settings.pinHash ? '已設定密碼。' : '尚未設定密碼。'}只用來防止學生誤入，請勿使用重要密碼。</p>
       <div className="flex flex-wrap items-end gap-3"><label>{settings.pinHash ? '更換密碼' : '設定密碼'}（4 到 8 個數字）<input type="password" inputMode="numeric" autoComplete="off" maxLength={8} className={field + ' w-48'} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} /></label><button type="button" className={btn} onClick={savePin}>儲存密碼</button>{settings.pinHash && <button type="button" className={btn} onClick={() => { set({pinHash: ''}); setNote('已取消老師密碼。'); }}>取消密碼</button>}</div>
-    </section>
+    </Fold>
     <p role="status" className="text-blue-800">{note}</p>
   </div>;
 }
@@ -144,7 +147,7 @@ function SettingsFile({settings, commit, onReplace}) {
       <div className="flex flex-wrap gap-2"><button type="button" className={btn + ' border-blue-700 text-blue-800'} onClick={download}>匯出設定檔</button><button type="button" className={btn} onClick={() => input.current?.click()}>匯入設定檔到這台裝置</button><input ref={input} type="file" accept="application/json,.json" hidden onChange={load} /></div>
       <p className="text-sm text-slate-600">{settings.sharedVersion ? `這台裝置目前對應的設定檔版本：${new Date(settings.sharedVersion).toLocaleString('zh-TW')}` : '這台裝置還沒有匯出或套用過設定檔。'}</p>
     </section>
-    <section className={card}><h3 className="text-xl font-bold">清除</h3><button type="button" className={btn + ' text-red-800'} onClick={clear}>清除這台裝置的所有老師設定</button></section>
+    <Fold title="清除"><button type="button" className={btn + ' text-red-800'} onClick={clear}>清除這台裝置的所有老師設定</button></Fold>
     <p role="status" className="text-blue-800">{note}</p>
   </div>;
 }

@@ -9,7 +9,7 @@ try:
     b=p.chromium.launch(executable_path='/usr/bin/google-chrome',args=['--no-sandbox'])
     c=b.new_context(viewport={'width':1024,'height':900}); c.add_init_script(STUB); pg=c.new_page()
     pg.on('pageerror',lambda e: errs.append(str(e))); pg.on('dialog',lambda d: d.accept())
-    def teacher(): pg.locator('footer button:has-text("老師專區")').click(); pg.wait_for_selector('section[aria-label="老師專區"]')
+    def teacher(): pg.locator('footer button:has-text("老師專區")').click(); pg.wait_for_selector('section[aria-label="老師專區"]'); pg.evaluate("document.querySelectorAll('section[aria-label=老師專區] details').forEach(d=>d.open=true)")
     def play():
         pg.wait_for_selector('.writing-surface'); pg.wait_for_timeout(2500); pg.locator('summary:has-text("需要提示")').click(); pg.evaluate('window.__spoken=[]'); pg.get_by_role('button',name='播放筆順').click(); pg.wait_for_timeout(5000); return pg.evaluate('window.__spoken')
     # 預設不報讀
