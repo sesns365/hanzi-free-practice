@@ -17,6 +17,9 @@ export type LocalSettings = {
   // 書寫前看範字的秒數；0 表示不顯示範字。
   writingObserveSeconds: number;
   simpleMode: boolean;
+  // 學生可用的提示與查字典；寫了才能換下一個字。
+  allowFullCharacter: boolean; allowPale: boolean; allowMoreHint: boolean; allowNextStroke: boolean; allowAnimation: boolean;
+  showDictionary: boolean; requireWriting: boolean;
   lockPractice: boolean;
   defaultBookId: string;
   defaultLessonId: string;
@@ -26,7 +29,7 @@ export type LocalSettings = {
   // 這台裝置已經套用過的共用設定檔版本（匯出時間）。
   sharedVersion: number;
 };
-export const EMPTY_LOCAL_SETTINGS: LocalSettings = {entryOverrides: {}, componentGroups: {}, radicalVariantOverrides: {}, paintVariantQuestion: false, practiceSteps: 'writing', writingMode: 'free', writingHint: 'none', writingObserveSeconds: 3, simpleMode: false, lockPractice: false, defaultBookId: '', defaultLessonId: '', seatCount: 0, customLists: [], pinHash: '', sharedVersion: 0};
+export const EMPTY_LOCAL_SETTINGS: LocalSettings = {entryOverrides: {}, componentGroups: {}, radicalVariantOverrides: {}, paintVariantQuestion: false, practiceSteps: 'writing', writingMode: 'free', writingHint: 'none', writingObserveSeconds: 3, simpleMode: false, allowFullCharacter: true, allowPale: true, allowMoreHint: true, allowNextStroke: true, allowAnimation: true, showDictionary: true, requireWriting: false, lockPractice: false, defaultBookId: '', defaultLessonId: '', seatCount: 0, customLists: [], pinHash: '', sharedVersion: 0};
 const isObject = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
 const pick = <T,>(value: unknown, allowed: readonly T[], fallback: T) => allowed.includes(value as T) ? value as T : fallback;
 export const isHanzi = (value: string) => /^[㐀-鿿]$/.test(value);
@@ -52,6 +55,8 @@ export function cleanLocalSettings(value: unknown): LocalSettings {
   out.writingHint = pick(value.writingHint, ['none', 'pale', 'partial'] as const, 'none');
   out.writingObserveSeconds = Number.isInteger(value.writingObserveSeconds) && value.writingObserveSeconds >= 0 && value.writingObserveSeconds <= 300 ? value.writingObserveSeconds : 3;
   out.simpleMode = value.simpleMode === true;
+  for (const key of ['allowFullCharacter', 'allowPale', 'allowMoreHint', 'allowNextStroke', 'allowAnimation', 'showDictionary'] as const) out[key] = value[key] !== false;
+  out.requireWriting = value.requireWriting === true;
   out.lockPractice = value.lockPractice === true;
   if (typeof value.defaultBookId === 'string' && practiceBooks.some(book => book.id === value.defaultBookId)) {
     out.defaultBookId = value.defaultBookId;

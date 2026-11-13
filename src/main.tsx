@@ -43,7 +43,9 @@ function App() {
   // 畫面先出來，共用設定檔在背景檢查；有新版而且學生還沒開始寫，就重新套用。
   useEffect(() => { let stop = false; syncSharedSettings(loadLocalSettings()).then(next => { if (stop || !next) return; setLocal(next); if (!practising.current) setEpoch(n => n + 1); }); return () => { stop = true; }; }, []);
   useEffect(() => { if (query.get('teacher') === '1') requestTeacher(); }, []);
-  const markActive = useCallback((value: boolean) => { practising.current = value; }, []);
+  const [writing, setWriting] = useState(false);
+  const markActive = useCallback((value: boolean) => { practising.current = value; setWriting(value); }, []);
+  const compact = writing && view === 'practice' && !gate;
 
   const needSeat = local.seatCount > 0 && !seat;
   const chooseSeat = (value: string | null) => { session.set(SEAT_KEY, value); setSeat(value); };
@@ -90,7 +92,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-white px-4 py-3">
+      <header hidden={compact} className={compact ? '' : 'flex flex-wrap items-center justify-between gap-3 border-b bg-white px-4 py-3'}>
         <span className="inline-flex items-center gap-2 text-xl font-bold"><img src={base + 'icon.svg'} alt="" width="32" height="32" />自由練字板</span>
         <nav aria-label="主選單" className="flex flex-wrap items-center gap-2">
           {ready && !gate && view === 'practice' && local.seatCount > 0 && seat && <><span className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 font-bold text-violet-950"><UserRound size={18} />{seat === 'guest' ? '訪客' : `座號 ${seat}`}</span><button type="button" className={nav} onClick={() => leaveThen('seat')}>換人</button></>}
@@ -98,7 +100,7 @@ function App() {
         </nav>
         <img src={base + 'se365-logo.png'} alt="特工365" width="44" height="44" className="se365-logo" />
       </header>
-      <main className="mx-auto max-w-6xl p-4 sm:p-8">{body}</main>
+      <main className={'mx-auto max-w-6xl ' + (compact ? 'p-2' : 'p-4 sm:p-8')}>{body}</main>
       <footer className="py-6 text-center text-base text-slate-600">
         <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3">
           <span>由特工 365 製作</span>

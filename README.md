@@ -52,3 +52,7 @@ npm run dev
 ## 資料來源與授權
 
 字型與筆順資料來自中華民國教育部，僅供教學、非營利使用。各項授權全文見 `public/licenses/`。
+
+## 回歸測試
+
+`tests/` 內有兩支 Playwright 腳本（需先 `npm run build`，並把 `dist` 放到本機伺服器的 `/free-practice/` 路徑）。每次修改後三種練習模式（自己寫、跟著筆順寫、先畫部件）都要跑過再推送。

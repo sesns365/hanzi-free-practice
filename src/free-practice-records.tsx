@@ -7,6 +7,21 @@ const storageKey=(owner?:string)=>owner?baseKey+':'+owner:baseKey;
 export const MAX_SAVED_INK=60;
 // 同一台裝置（所有學生合計）的字跡紀錄上限，保留空間給練習進度使用。
 export const DEVICE_RECORD_CHARS=1500000;
+// 裝置的字跡空間滿了：自動拿掉最舊的字跡圖片（字和時間的紀錄仍保留），先清自己的，再清同一台裝置上其他人的。
+// 新紀錄排在最前面，所以從陣列尾端往前找就是最舊的。回傳調整後的清單；真的騰不出空間才回傳 null。
+function dropOldestInk(list:RecordItem[],keepId?:string){for(let i=list.length-1;i>=0;i--){const r=list[i];if(r.ink&&r.id!==keepId){const {ink,writing,...rest}=r;const copy=[...list];copy[i]=rest;return copy}}return null}
+function makeRoom(key:string,list:RecordItem[],keepId:string){
+ let mine=list;
+ for(let guard=0;guard<400;guard++){
+  if(JSON.stringify(mine).length+otherOwnersChars(key)<=DEVICE_RECORD_CHARS)return mine;
+  const trimmed=dropOldestInk(mine,keepId);if(trimmed){mine=trimmed;continue}
+  // 自己沒有可清的了：找佔最多空間的其他使用者，清掉他最舊的一筆字跡。
+  let biggest='',size=0;try{for(let i=0;i<(localStorage.length||0);i++){const k=localStorage.key?.(i);if(k&&k!==key&&k.startsWith(baseKey)){const n=(localStorage.getItem(k)||'').length;if(n>size){size=n;biggest=k}}}}catch{}
+  if(!biggest)return null;
+  try{const other=dropOldestInk(read(biggest));if(!other)return null;localStorage.setItem(biggest,JSON.stringify(other))}catch{return null}
+ }
+ return null;
+}
 function otherOwnersChars(key:string){let total=0;try{for(let i=0;i<(localStorage.length||0);i++){const k=localStorage.key?.(i);if(k&&k!==key&&k.startsWith(baseKey))total+=(localStorage.getItem(k)||'').length}}catch{}return total}
 type RecordItem={id:string;character:string;book:string;lesson:string;at:string;ink?:string;sentAt?:string;writing?:{mode:string;lines:number[][][]}};
 function read(key:string):RecordItem[]{const raw=localStorage.getItem(key);if(!raw)return [];const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw Error('invalid records');return parsed.filter(r=>r&&typeof r.id==='string'&&typeof r.character==='string'&&typeof r.book==='string'&&typeof r.lesson==='string'&&typeof r.at==='string')}
@@ -16,7 +31,7 @@ export function useFreePracticeRecords(owner?:string){
  const [records,setRecords]=useState<RecordItem[]>([]),[error,setError]=useState('');
  useEffect(()=>{try{setRecords(read(key));setError('')}catch{setRecords([]);setError('無法讀取本機紀錄，請確認瀏覽器儲存功能。')}},[key]);
  const add=useCallback((character:string,book:string,lesson:string)=>{try{const id=crypto.randomUUID(),next=[{id,character,book,lesson,at:new Date().toISOString()},...read(key)];localStorage.setItem(key,JSON.stringify(next));setRecords(next);setError('');return id}catch{setError('無法儲存本機紀錄，請確認瀏覽器儲存空間。');return null}},[key]);
- const saveInk=useCallback((id:string,ink:string,writing?:RecordItem['writing'])=>{try{const old=read(key);if(!old.some(r=>r.id===id))throw Error('missing');const next=keepRecentInk(old.map(r=>r.id===id?{...r,ink,...(writing?{writing}:{})}:r)),text=JSON.stringify(next);if(text.length+otherOwnersChars(key)>DEVICE_RECORD_CHARS){setError('這台裝置保存的字跡已經太多，請先下載字跡總表，再刪除舊紀錄。');return false}localStorage.setItem(key,text);setRecords(next);setError('');return true}catch{setError('字跡未存入，請確認瀏覽器儲存空間，或先刪除舊紀錄。');return false}},[key]);
+ const saveInk=useCallback((id:string,ink:string,writing?:RecordItem['writing'])=>{try{const old=read(key);if(!old.some(r=>r.id===id))throw Error('missing');const next=keepRecentInk(old.map(r=>r.id===id?{...r,ink,...(writing?{writing}:{})}:r));const fitted=makeRoom(key,next,id);if(!fitted){setError('這台裝置保存的字跡已經太多，請先下載字跡總表，再刪除舊紀錄。');return false}localStorage.setItem(key,JSON.stringify(fitted));setRecords(fitted);setError('');return true}catch{setError('字跡未存入，請確認瀏覽器儲存空間，或先刪除舊紀錄。');return false}},[key]);
  const remove=useCallback((id:string)=>{try{const next=read(key).filter(r=>r.id!==id);localStorage.setItem(key,JSON.stringify(next));setRecords(next);setError('')}catch{setError('無法刪除本機紀錄，請稍後再試。')}},[key]);
  // 只清除目前使用者（這位學生、老師或訪客）的紀錄，不影響同一台裝置上的其他人。
  const removeAll=useCallback(()=>{try{localStorage.setItem(key,'[]');setRecords([]);setError('')}catch{setError('無法刪除本機紀錄，請稍後再試。')}},[key]);
@@ -63,4 +78,16 @@ export function FreePracticeRecords({records,error,remove,removeAll,onSubmit,onL
   {records.length>0&&<div className="mt-3 space-y-2"><div className="flex flex-wrap gap-2" role="group" aria-label="本機練習紀錄工具"><button type="button" className={small+' border-violet-700 text-violet-900'} disabled={!inkedCount} onClick={downloadSheet}>下載字跡總表（{inkedCount} 字）</button><button type="button" className={small+' border-violet-700 text-violet-900'} onClick={downloadList}>下載紀錄清單（Excel 可開啟）</button>{onSubmit&&<button type="button" className={small+' border-green-700 text-green-800'} disabled={sending||!unsent.length} onClick={()=>submit(unsent)}>全部交給老師（{unsent.length} 字）</button>}{removeAll&&<button type="button" className={small+' border-red-700 text-red-800'} onClick={clearAll}>刪除全部紀錄</button>}</div><p className="text-sm text-slate-600">字跡圖片只保留最近 {MAX_SAVED_INK} 個字；較舊的紀錄仍會保留字和時間。</p></div>}
   {status&&<p role="status" className="mt-2 text-sm text-violet-900">{status}</p>}
   {records.length?<ul className="mt-2 max-h-96 overflow-y-auto divide-y">{records.map(r=><li className="py-2" key={r.id}><div className="flex flex-wrap items-center gap-2"><strong className="text-xl">{r.character}</strong><span className="min-w-0 flex-1 text-sm">{r.book}・{r.lesson}・{timeText(r.at)}</span>{onLoad&&r.writing&&<button type="button" className={small+' border-violet-700 text-violet-900'} aria-label={'載入'+r.character+'的紀錄'} onClick={()=>onLoad(r)}>載入紀錄</button>}{onSubmit&&r.ink&&(r.sentAt?<span className="text-sm font-bold text-green-800">已交給老師</span>:<button type="button" className={small+' border-green-700 text-green-800'} disabled={sending} aria-label={`把${r.character}的字跡交給老師`} onClick={()=>submit([r])}>交給老師</button>)}{r.ink&&<button type="button" className={small} aria-label={`下載${r.character}的字跡`} onClick={()=>download(r.ink!,`${r.character}_手寫字跡_${new Date(r.at).toLocaleDateString('sv-SE',{timeZone:'Asia/Taipei'})}.${r.ink!.startsWith('data:image/png')?'png':'jpg'}`)}>下載</button>}<button type="button" className={small} aria-label={`刪除${r.character}的練習紀錄`} onClick={()=>{if(window.confirm('刪除這筆紀錄及其中保存的字跡？'))remove(r.id)}}>刪除</button></div>{r.ink&&<details className="mt-2"><summary className="cursor-pointer text-blue-800">查看字跡</summary><img src={r.ink} alt={`${r.character}的手寫字跡`} className="mt-2 w-48 max-w-full rounded border"/></details>}</li>)}</ul>:<p className="mt-2 text-sm">尚無紀錄</p>}</details>
+}
+
+// 老師專區用：把這台載具上訪客與每個座號保存的字跡，各自做成一段，合併成一張圖下載。回傳有字跡的人數。
+export async function downloadAllSeatsSheet(seatCount:number){
+ const owners:[string,string][]=[['訪客（不分座號）',storageKey()],...Array.from({length:Math.max(0,seatCount)},(_,i)=>[`座號 ${i+1}`,storageKey('student:seat-'+(i+1))] as [string,string])];
+ const parts:{label:string;image:HTMLImageElement}[]=[];
+ for(const [label,key] of owners){let list:RecordItem[]=[];try{list=read(key)}catch{}const href=await inkSheet(list);if(href)parts.push({label,image:await loadImage(href)})}
+ if(!parts.length)return 0;
+ const head=64,width=Math.max(...parts.map(p=>p.image.width)),canvas=document.createElement('canvas');canvas.width=width;canvas.height=parts.reduce((sum,p)=>sum+head+p.image.height,0);
+ const ctx=canvas.getContext('2d')!;ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);let y=0;
+ for(const p of parts){ctx.fillStyle='#ede9fe';ctx.fillRect(0,y,width,head);ctx.fillStyle='#2e1065';ctx.font='bold 32px "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif';ctx.fillText(p.label,28,y+43);y+=head;ctx.drawImage(p.image,0,y);y+=p.image.height}
+ download(canvas.toDataURL('image/png'),`全部座號字跡總表_${today()}.png`);return parts.length;
 }

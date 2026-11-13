@@ -4,6 +4,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import QRCode from 'qrcode';
 import TeachingContent from './TeachingContent';
 import BookPicker from './BookPicker';
+import {downloadAllSeatsSheet} from './free-practice-records';
 import TeachingSettings from './TeachingSettings';
 import {validateTeachingEntry} from './curriculum-settings';
 import {getBook, getLessonMeta} from './curriculum-source';
@@ -14,7 +15,7 @@ const btn = 'rounded-xl border-2 bg-white px-4 py-2 font-bold hover:bg-blue-50 d
 const field = 'mt-1 block w-full rounded-xl border-2 bg-white p-2';
 const card = 'space-y-4 rounded-2xl border bg-white p-5';
 const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'], ['parts', '逐字部件與部首答案'], ['lists', '自訂字單'], ['links', '派課連結'], ['file', '設定檔與共用']];
-const STEPS = [['writing', '直接書寫'], ['parts', '畫部件、組部件、書寫']], MODES = [['free', '自由書寫'], ['guided', '筆順引導']], HINTS = [['none', '不顯示底字'], ['pale', '淡色底字'], ['partial', '部分字形']];
+const STEPS = [['writing', '只寫字'], ['parts', '先畫部件、組部件，再寫字']], MODES = [['free', '自己寫'], ['guided', '跟著筆順寫']], HINTS = [['none', '不顯示底字'], ['pale', '淡色底字'], ['partial', '部分字形']];
 const lessonLabel = id => `第 ${getLessonMeta(id)?.number || ''} 課・${getLessonMeta(id)?.title || id}`;
 const Options = ({rows}) => rows.map(([value, label]) => <option key={value} value={value}>{label}</option>);
 
@@ -36,6 +37,10 @@ function General({settings, commit}) {
       <div><span className="font-bold">書寫前看範字</span><div className="mt-1 flex flex-wrap items-center gap-2" role="group" aria-label="書寫前看範字">{[[0, '關閉'], [3, '3 秒'], [5, '5 秒'], [7, '7 秒'], [10, '10 秒']].map(([seconds, label]) => <button type="button" key={seconds} aria-pressed={settings.writingObserveSeconds === seconds} className={btn + (settings.writingObserveSeconds === seconds ? ' border-blue-700 bg-blue-100 text-blue-800' : '')} onClick={() => set({writingObserveSeconds: seconds})}>{label}</button>)}<label className="flex items-center gap-2">自訂<input type="number" min="1" max="300" aria-label="自訂範字秒數" className="w-24 rounded-xl border-2 bg-white p-2" value={settings.writingObserveSeconds || ''} placeholder="秒" onChange={e => set({writingObserveSeconds: Math.max(0, Math.min(300, Math.floor(Number(e.target.value) || 0)))})} />秒</label></div></div>
       {check('simpleMode', '預設使用簡易畫面')}
       {check('lockPractice', '鎖定練習方式，學生不能自己更改')}
+      {check('requireWriting', '寫了才能換下一個字')}
+    </section>
+    <section className={card}><h3 className="text-xl font-bold">學生可以用的提示</h3>
+      <div className="grid gap-3 sm:grid-cols-2">{check('allowFullCharacter', '顯示整字')}{check('allowPale', '淡色底字')}{check('allowMoreHint', '部分字形提示')}{check('allowNextStroke', '提示下一筆')}{check('allowAnimation', '播放筆順')}{check('showDictionary', '查字典（會連到教育部網站）')}</div>
     </section>
     <section className={card}><h3 className="text-xl font-bold">學生打開時的版本與課次</h3>
       
@@ -46,6 +51,7 @@ function General({settings, commit}) {
     </section>
     <section className={card}><h3 className="text-xl font-bold">共用載具：用座號分開紀錄</h3>
       <p className="text-sm text-slate-600">學生先點座號，紀錄各自分開。0 表示不分座號。</p>
+      <button type="button" className={btn} onClick={async () => { setNote('正在製作字跡總表…'); try { const count = await downloadAllSeatsSheet(settings.seatCount); setNote(count ? `已下載 ${count} 位的字跡總表。` : '這台載具還沒有保存的字跡。'); } catch { setNote('字跡總表製作失敗，請再試一次。'); } }}>下載這台載具所有座號的字跡總表</button>
       <label className="block w-40">班級人數<input type="number" min="0" max="60" className={field} value={settings.seatCount} onChange={e => set({seatCount: Math.max(0, Math.min(60, Math.floor(Number(e.target.value) || 0)))})} /></label>
     </section>
     <section className={card}><h3 className="text-xl font-bold">老師密碼</h3>
