@@ -4,17 +4,18 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import QRCode from 'qrcode';
 import TeachingContent from './TeachingContent';
 import BookPicker from './BookPicker';
+import StrokeNameEditor from './StrokeNameEditor';
 import {downloadAllSeatsSheet} from './free-practice-records';
 import TeachingSettings from './TeachingSettings';
 import {validateTeachingEntry} from './curriculum-settings';
 import {getBook, getLessonMeta} from './curriculum-source';
-import {loadLocalSettings, saveLocalSettings, EMPTY_LOCAL_SETTINGS, practiceBooks, isHanzi, pinHash, exportSettings, parseSettingsFile} from './local-settings';
+import {loadLocalSettings, saveLocalSettings, EMPTY_LOCAL_SETTINGS, practiceBooks, isHanzi, pinHash, ANIMATION_SPEEDS, SPEED_LABELS, exportSettings, parseSettingsFile} from './local-settings';
 
 const tab = 'rounded-xl border-2 bg-white px-4 py-3 font-bold';
 const btn = 'rounded-xl border-2 bg-white px-4 py-2 font-bold hover:bg-blue-50 disabled:opacity-40';
 const field = 'mt-1 block w-full rounded-xl border-2 bg-white p-2';
 const card = 'space-y-4 rounded-2xl border bg-white p-5';
-const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'], ['parts', '逐字部件與部首答案'], ['lists', '自訂字單'], ['links', '派課連結'], ['file', '設定檔與共用']];
+const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'], ['parts', '逐字部件與部首答案'], ['strokes', '逐字筆畫名稱'], ['lists', '自訂字單'], ['links', '派課連結'], ['file', '設定檔與共用']];
 const STEPS = [['writing', '只寫字'], ['parts', '先畫部件、組部件，再寫字']], MODES = [['free', '自己寫'], ['guided', '跟著筆順寫']], HINTS = [['none', '不顯示底字'], ['pale', '淡色底字'], ['partial', '部分字形']];
 const lessonLabel = id => `第 ${getLessonMeta(id)?.number || ''} 課・${getLessonMeta(id)?.title || id}`;
 const Options = ({rows}) => rows.map(([value, label]) => <option key={value} value={value}>{label}</option>);
@@ -38,6 +39,10 @@ function General({settings, commit}) {
       {check('simpleMode', '預設使用簡易畫面')}
       {check('lockPractice', '鎖定練習方式，學生不能自己更改')}
       {check('requireWriting', '寫了才能換下一個字')}
+    </section>
+    <section className={card}><h3 className="text-xl font-bold">筆順</h3>
+      <label className="block w-56">筆順速度<select aria-label="筆順速度預設" className={field} value={settings.animationSpeed} onChange={e => set({animationSpeed: Number(e.target.value)})}>{ANIMATION_SPEEDS.map((speed, i) => <option key={speed} value={speed}>{SPEED_LABELS[i]}</option>)}</select></label>
+      {check('strokeNarration', '播放筆順時報讀筆畫名稱', '例如「一，橫」「二，撇」。名稱可在「逐字筆畫名稱」更正。')}
     </section>
     <section className={card}><h3 className="text-xl font-bold">學生可以用的提示</h3>
       <div className="grid gap-3 sm:grid-cols-2">{check('allowFullCharacter', '顯示整字')}{check('allowPale', '淡色底字')}{check('allowMoreHint', '部分字形提示')}{check('allowNextStroke', '提示下一筆')}{check('allowAnimation', '播放筆順')}{check('showDictionary', '查字典（會連到教育部網站）')}</div>
@@ -164,7 +169,7 @@ export default function TeacherPage({settings, onChange, onDirty}) {
     markDirty(false); setView(next);
   };
   const replace = saved => { onChange(saved); markDirty(false); setResetKey(k => k + 1); };
-  const counts = {content: Object.keys(settings.entryOverrides).length, parts: new Set([...Object.keys(settings.componentGroups), ...Object.keys(settings.radicalVariantOverrides)]).size, lists: settings.customLists.length};
+  const counts = {strokes: Object.keys(settings.strokeNameOverrides).length, content: Object.keys(settings.entryOverrides).length, parts: new Set([...Object.keys(settings.componentGroups), ...Object.keys(settings.radicalVariantOverrides)]).size, lists: settings.customLists.length};
   return <section aria-label="老師專區" className="space-y-5">
     <div className="space-y-3 rounded-2xl border bg-white p-5">
       <h2 className="text-2xl font-bold">老師專區</h2>
@@ -178,6 +183,7 @@ export default function TeacherPage({settings, onChange, onDirty}) {
       <label className="flex items-center gap-3 rounded-2xl border bg-white p-4"><input type="checkbox" checked={settings.paintVariantQuestion} onChange={e => { try { commit({paintVariantQuestion: e.target.checked}); } catch (error) { window.alert(error.message); } }} /><span><strong>畫部件時，請學生判斷部首是否為變形部首</strong></span></label>
       <TeachingSettings key={'parts' + resetKey} partsOnly initial={settings} api={partsApi} onDirty={markDirty} />
     </>}
+    {view === 'strokes' && <section className={card}><h3 className="text-xl font-bold">逐字筆畫名稱</h3><StrokeNameEditor key={'strokes' + resetKey} settings={settings} own={settings.strokeNameOverrides} onChange={value => { try { commit({strokeNameOverrides: Object.fromEntries(Object.entries(value).filter(([, names]) => Array.isArray(names)))}); } catch (error) { window.alert(error.message); } }} /></section>}
     {view === 'lists' && <Lists key={resetKey} settings={settings} commit={commit} />}
     {view === 'links' && <Links key={resetKey} settings={settings} />}
     {view === 'file' && <SettingsFile settings={settings} commit={commit} onReplace={replace} />}

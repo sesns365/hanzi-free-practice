@@ -3,6 +3,8 @@
 import {fetchJSON} from './http-json';
 import {STROKE_NAMES} from './stroke-name-list';
 export {STROKE_NAMES};
+// 報讀筆畫名稱時，裝置語音容易把「撇」「挑」念成第一聲；改用只有第三聲讀音的同音字代讀，畫面仍顯示原字。
+export const strokeSpeechName=(name:string)=>name.replaceAll('撇','苤').replaceAll('挑','窕');
 const CODE='abcdefghijklmnopqrstuvwxyzABCDEFGH';
 const DIGITS=['零','一','二','三','四','五','六','七','八','九'];
 // 1→一、12→十二、25→二十五（筆畫數不會超過兩位數太多）。

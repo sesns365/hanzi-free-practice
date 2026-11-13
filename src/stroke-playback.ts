@@ -1,6 +1,6 @@
 // @ts-nocheck
 import {speakText} from './speech';
-import {strokeNamesFor,chineseNumber,loadStrokeNames} from './stroke-names';
+import {strokeNamesFor,chineseNumber,loadStrokeNames,strokeSpeechName} from './stroke-names';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 // 筆順速度越慢，筆與筆之間也停久一點，讓學生有時間看清楚。
 export const strokeDelay=(speed=1)=>Math.round(Math.min(1500,1000/Math.min(1,Math.max(.3,Number(speed)||1))));
@@ -27,7 +27,7 @@ export function playStrokeOrder(writer,{char,count,settings,active=()=>true,paus
    const speech=new Promise(resolve=>{
     let done=false;const finish=()=>{if(!done){done=true;clearTimeout(timer);resolve(null)}};
     const timer=setTimeout(finish,4500);
-    const started=speakText(chineseNumber(i+1)+(name?'，'+name:''),settings,status=>{if(status==='done'||status==='error'||status==='cancelled')finish()});
+    const started=speakText(chineseNumber(i+1)+(name?'，'+strokeSpeechName(name):''),settings,status=>{if(status==='done'||status==='error'||status==='cancelled')finish()});
     if(!started)finish();
    });
    const stroke=new Promise(resolve=>{try{Promise.resolve(writer.animateStroke(i,{onComplete:()=>resolve(null)})).catch(()=>resolve(null))}catch{resolve(null)}});

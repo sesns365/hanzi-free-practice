@@ -3,6 +3,11 @@
 import strokeCounts from './stroke-counts.json';
 import {validateTeachingEntry} from './curriculum-settings';
 import {BOOKS, CUSTOM_BOOK, getBook} from './curriculum-source';
+import {STROKE_NAMES} from './stroke-name-list';
+
+// 筆順播放速度（倍率），數字越小越慢。
+export const ANIMATION_SPEEDS = [.3, .5, .6, .75, 1, 1.25, 1.5, 2];
+export const SPEED_LABELS = ['最慢', '很慢', '慢', '稍慢', '一般', '稍快', '快', '最快'];
 
 const KEY = 'free-practice-local-settings:v1';
 export type CustomList = {id: string; name: string; chars: string};
@@ -20,6 +25,8 @@ export type LocalSettings = {
   // 學生可用的提示與查字典；寫了才能換下一個字。
   allowFullCharacter: boolean; allowPale: boolean; allowMoreHint: boolean; allowNextStroke: boolean; allowAnimation: boolean;
   showDictionary: boolean; requireWriting: boolean;
+  // 筆順：播放速度、播放時是否逐筆報讀筆畫名稱（預設不報讀）、老師更正的筆畫名稱。
+  animationSpeed: number; strokeNarration: boolean; strokeNameOverrides: Record<string, string[]>;
   lockPractice: boolean;
   defaultBookId: string;
   defaultLessonId: string;
@@ -29,7 +36,7 @@ export type LocalSettings = {
   // 這台裝置已經套用過的共用設定檔版本（匯出時間）。
   sharedVersion: number;
 };
-export const EMPTY_LOCAL_SETTINGS: LocalSettings = {entryOverrides: {}, componentGroups: {}, radicalVariantOverrides: {}, paintVariantQuestion: false, practiceSteps: 'writing', writingMode: 'free', writingHint: 'none', writingObserveSeconds: 3, simpleMode: false, allowFullCharacter: true, allowPale: true, allowMoreHint: true, allowNextStroke: true, allowAnimation: true, showDictionary: true, requireWriting: false, lockPractice: false, defaultBookId: '', defaultLessonId: '', seatCount: 0, customLists: [], pinHash: '', sharedVersion: 0};
+export const EMPTY_LOCAL_SETTINGS: LocalSettings = {entryOverrides: {}, componentGroups: {}, radicalVariantOverrides: {}, paintVariantQuestion: false, practiceSteps: 'writing', writingMode: 'free', writingHint: 'none', writingObserveSeconds: 3, simpleMode: false, allowFullCharacter: true, allowPale: true, allowMoreHint: true, allowNextStroke: true, allowAnimation: true, showDictionary: true, requireWriting: false, animationSpeed: 1, strokeNarration: false, strokeNameOverrides: {}, lockPractice: false, defaultBookId: '', defaultLessonId: '', seatCount: 0, customLists: [], pinHash: '', sharedVersion: 0};
 const isObject = (value: unknown): value is Record<string, any> => !!value && typeof value === 'object' && !Array.isArray(value);
 const pick = <T,>(value: unknown, allowed: readonly T[], fallback: T) => allowed.includes(value as T) ? value as T : fallback;
 export const isHanzi = (value: string) => /^[㐀-鿿]$/.test(value);
@@ -37,7 +44,7 @@ export const practiceBooks = BOOKS.filter(book => book.id !== CUSTOM_BOOK && boo
 
 // 讀回時逐項檢查，資料壞掉的那一項就略過，其他照常套用。
 export function cleanLocalSettings(value: unknown): LocalSettings {
-  const out: LocalSettings = {...EMPTY_LOCAL_SETTINGS, entryOverrides: {}, componentGroups: {}, radicalVariantOverrides: {}, customLists: []};
+  const out: LocalSettings = {...EMPTY_LOCAL_SETTINGS, entryOverrides: {}, componentGroups: {}, radicalVariantOverrides: {}, customLists: [], strokeNameOverrides: {}};
   if (!isObject(value)) return out;
   if (isObject(value.entryOverrides)) for (const [id, entry] of Object.entries(value.entryOverrides)) {
     try { out.entryOverrides[id] = validateTeachingEntry(id, entry); } catch {}
@@ -57,6 +64,11 @@ export function cleanLocalSettings(value: unknown): LocalSettings {
   out.simpleMode = value.simpleMode === true;
   for (const key of ['allowFullCharacter', 'allowPale', 'allowMoreHint', 'allowNextStroke', 'allowAnimation', 'showDictionary'] as const) out[key] = value[key] !== false;
   out.requireWriting = value.requireWriting === true;
+  out.animationSpeed = ANIMATION_SPEEDS.includes(value.animationSpeed) ? value.animationSpeed : 1;
+  out.strokeNarration = value.strokeNarration === true;
+  if (isObject(value.strokeNameOverrides)) for (const [char, names] of Object.entries(value.strokeNameOverrides)) {
+    if (Array.isArray(names) && names.length === (strokeCounts as Record<string, number>)[char] && names.every(name => STROKE_NAMES.includes(name))) out.strokeNameOverrides[char] = names;
+  }
   out.lockPractice = value.lockPractice === true;
   if (typeof value.defaultBookId === 'string' && practiceBooks.some(book => book.id === value.defaultBookId)) {
     out.defaultBookId = value.defaultBookId;
