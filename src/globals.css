@@ -511,11 +511,25 @@ details[open] > summary { margin-bottom: .25rem; }
 
 /* ── 獨立版新增 ── */
 /* 選字畫面的三步驟引導 */
-.free-guide{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;margin:0;padding:0}
+.free-guide{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;padding:0}
 .free-guide li{display:flex;align-items:center;gap:.5rem;border-radius:.75rem;background:#fff;border:1px solid #ddd6fe;padding:.5rem .75rem;font-weight:700;color:#2e1065}
 .free-guide b{display:inline-flex;align-items:center;justify-content:center;width:1.75rem;height:1.75rem;border-radius:999px;background:#6d28d9;color:#fff;flex:none}
-/* 語詞加注音 */
-.free-word-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.25rem;font-size:1.5rem}
+/* 語詞加注音：注音整組不高過國字 */
+.free-word-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem}
+.word-zhuyin{display:inline-flex;align-items:center;gap:.3em;font-size:2.25rem;line-height:1;font-weight:400}
+.wz-char{display:inline-flex;align-items:center;gap:.05em}
+.wz-zhuyin{display:inline-flex;flex-direction:column;justify-content:center;line-height:1;padding-right:.55em;color:#475569;font-weight:700}
+.wz-zhuyin>span{position:relative;display:block;text-align:center}
+.wz-light{line-height:.5}
+.wz-tone{position:absolute;left:92%;top:-.35em;font-size:.9em}
+.wz-char[data-target] .wz-zhuyin{color:#1d4ed8}
+/* 版本／年級／學期 */
+.book-picker{display:flex;flex-wrap:wrap;gap:.75rem 1.5rem}
+.book-picker-label{display:block;font-weight:700;color:#2e1065;margin-bottom:.35rem}
+.book-picker-options{display:flex;flex-wrap:wrap;gap:.4rem}
+.book-picker-options button{min-width:3rem;border-radius:.75rem;border:2px solid #c4b5fd;background:#fff;padding:.55rem .9rem;font-size:1.15rem;font-weight:700;color:#2e1065}
+.book-picker-options button[aria-pressed="true"]{background:#6d28d9;border-color:#6d28d9;color:#fff}
+.book-picker-options button:disabled{opacity:.45;border-style:dashed}
 /* 簡易畫面：書寫時只留下必要的按鈕，說明文字放大 */
 .free-practice-writing[data-simple="true"] [data-ctl="secondary"],
 .free-practice-writing[data-simple="true"] details[aria-label$="延伸查詢"],
