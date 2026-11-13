@@ -541,3 +541,7 @@ details[open] > summary { margin-bottom: .25rem; }
 .seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(4.5rem,1fr));gap:.75rem}
 .seat-grid button{aspect-ratio:1;border-radius:1rem;border:3px solid #c4b5fd;background:#fff;font-size:1.75rem;font-weight:700;color:#2e1065}
 .seat-grid button:hover{background:#ede9fe}
+/* 特工365 徽章：放在標題列最右側 */
+header nav{margin-left:auto}
+.se365-logo{opacity:.85;flex:none}
+.free-completion-message:empty{display:none}

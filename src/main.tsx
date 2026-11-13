@@ -90,7 +90,7 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-white px-4 py-3">
-        <span className="text-xl font-bold">生字自由練習</span>
+        <span className="inline-flex items-center gap-2 text-xl font-bold"><img src={base + 'icon.svg'} alt="" width="32" height="32" />自由練字板</span>
         <nav aria-label="主選單" className="flex flex-wrap items-center gap-2">
           {ready && !gate && view === 'practice' && local.seatCount > 0 && seat && <><span className="inline-flex items-center gap-1 rounded-xl bg-violet-100 px-3 py-2 font-bold text-violet-950"><UserRound size={18} />{seat === 'guest' ? '訪客' : `座號 ${seat}`}</span><button type="button" className={nav} onClick={() => leaveThen('seat')}>換人</button></>}
           {teacher && <>
@@ -99,6 +99,7 @@ function App() {
             <button type="button" className={nav} onClick={leaveTeacher}><LogOut size={18} />離開老師模式</button>
           </>}
         </nav>
+        <img src={base + 'se365-logo.png'} alt="特工365" width="44" height="44" className="se365-logo" />
       </header>
       <main className="mx-auto max-w-6xl p-4 sm:p-8">{body}</main>
       <footer className="py-6 text-center text-base text-slate-600">
@@ -108,8 +109,6 @@ function App() {
           <a className="underline" href={base + 'licenses/moe-standard-kai.txt'} target="_blank" rel="noreferrer">字型與筆順資料：中華民國教育部</a>
           <span aria-hidden="true">·</span>
           <span>僅供教學，非營利使用</span>
-          <span aria-hidden="true">·</span>
-          <span>練習紀錄只存在這台裝置</span>
           {!teacher && ready && !gate && <><span aria-hidden="true">·</span><button type="button" className="underline" onClick={requestTeacher}>老師專區</button></>}
         </div>
       </footer>
