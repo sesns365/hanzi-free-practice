@@ -15,7 +15,7 @@ const tab = 'rounded-xl border-2 bg-white px-4 py-3 font-bold';
 const btn = 'rounded-xl border-2 bg-white px-4 py-2 font-bold hover:bg-blue-50 disabled:opacity-40';
 const field = 'mt-1 block w-full rounded-xl border-2 bg-white p-2';
 const card = 'space-y-4 rounded-2xl border bg-white p-5';
-const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'], ['parts', '逐字部件與部首答案'], ['strokes', '逐字筆畫名稱'], ['lists', '自訂字單'], ['links', '派課連結'], ['file', '設定檔與共用']];
+const TABS = [['general', '練習預設'], ['content', '逐字教材與讀音'], ['parts', '逐字部件與部首答案'], ['strokes', '逐字筆畫名稱'], ['lists', '自訂字單'], ['links', '派課連結'], ['file', '備份與移轉']];
 const STEPS = [['writing', '只寫字'], ['parts', '先畫部件、組部件，再寫字']], MODES = [['free', '自己寫'], ['guided', '跟著筆順寫']], HINTS = [['none', '不顯示底字'], ['pale', '淡色底字'], ['partial', '部分字形']];
 const lessonLabel = id => `第 ${getLessonMeta(id)?.number || ''} 課・${getLessonMeta(id)?.title || id}`;
 const label = (rows, value) => rows.find(([id]) => id === value)?.[1] || '';
@@ -124,8 +124,8 @@ function SettingsFile({settings, commit, onReplace}) {
   const download = () => {
     try {
       const {version, text} = exportSettings(settings), link = document.createElement('a');
-      link.href = URL.createObjectURL(new Blob([text], {type: 'application/json'})); link.download = 'class-settings.json'; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 5000);
-      commit({sharedVersion: version}); setNote('已下載 class-settings.json。');
+      link.href = URL.createObjectURL(new Blob([text], {type: 'application/json'})); link.download = `自由練字板設定_${new Date(version).toLocaleDateString('sv-SE')}.json`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+      commit({sharedVersion: version}); setNote('已下載設定檔。');
     } catch (e) { setNote(e.message || '設定檔製作失敗。'); }
   };
   const load = async event => {
@@ -141,11 +141,12 @@ function SettingsFile({settings, commit, onReplace}) {
     try { onReplace(saveLocalSettings({...EMPTY_LOCAL_SETTINGS, sharedVersion: settings.sharedVersion})); setNote('已清除這台裝置的老師設定。'); } catch (e) { setNote(e.message); }
   };
   return <div className="space-y-5">
-    <section className={card}><h3 className="text-xl font-bold">一次設定，所有載具套用</h3>
-      <ol className="list-decimal space-y-2 pl-6"><li>按「匯出設定檔」。</li><li>把檔案上傳到 GitHub 儲存庫的 <code>public</code> 資料夾，取代 <code>class-settings.json</code>。</li><li>各載具下次開啟自動套用。</li></ol>
-      <p className="text-sm text-slate-600">載具會整份換成新設定檔（學生紀錄不受影響）。設定檔是公開的，請勿寫學生姓名。</p>
+    <section className={card}><h3 className="text-xl font-bold">把這台的設定帶到其他裝置</h3>
+      <p>你在老師專區改的設定，只存在這台裝置的這個瀏覽器，不會影響其他人，也不會改到網站。</p>
+      <ol className="list-decimal space-y-2 pl-6"><li>在這台按「匯出設定檔」，會下載一個設定檔。</li><li>把檔案傳到另一台裝置（雲端硬碟、隨身碟或寄信都可以）。</li><li>在另一台打開老師專區，按「匯入設定檔到這台裝置」，選這個檔案。</li></ol>
+      <p className="text-sm text-slate-600">匯入會把那台的老師設定整份換掉；學生的字跡與進度不受影響。也可以把設定檔留著當備份，換瀏覽器或清除資料後再匯入。</p>
       <div className="flex flex-wrap gap-2"><button type="button" className={btn + ' border-blue-700 text-blue-800'} onClick={download}>匯出設定檔</button><button type="button" className={btn} onClick={() => input.current?.click()}>匯入設定檔到這台裝置</button><input ref={input} type="file" accept="application/json,.json" hidden onChange={load} /></div>
-      <p className="text-sm text-slate-600">{settings.sharedVersion ? `這台裝置目前對應的設定檔版本：${new Date(settings.sharedVersion).toLocaleString('zh-TW')}` : '這台裝置還沒有匯出或套用過設定檔。'}</p>
+      <p className="text-sm text-slate-600">{settings.sharedVersion ? `上次匯出或匯入：${new Date(settings.sharedVersion).toLocaleString('zh-TW')}` : '這台裝置還沒有匯出或匯入過設定檔。'}</p>
     </section>
     <Fold title="清除"><button type="button" className={btn + ' text-red-800'} onClick={clear}>清除這台裝置的所有老師設定</button></Fold>
     <p role="status" className="text-blue-800">{note}</p>
@@ -176,7 +177,7 @@ export default function TeacherPage({settings, onChange, onDirty}) {
   return <section aria-label="老師專區" className="space-y-5">
     <div className="space-y-3 rounded-2xl border bg-white p-5">
       <h2 className="text-2xl font-bold">老師專區</h2>
-      <p className="text-sm text-slate-600">設定只存在這台裝置；要套用到其他載具請用「設定檔與共用」。</p>
+      <p className="text-sm text-slate-600">設定會自動存在這台裝置；要帶到其他裝置請用「備份與移轉」。</p>
       {!settings.pinHash && <p className="rounded-xl bg-amber-50 p-3 text-amber-950">尚未設定老師密碼，學生也進得來。</p>}
       <div role="tablist" aria-label="老師設定類別" className="flex flex-wrap gap-2">{TABS.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={view === id} className={tab + (view === id ? ' border-blue-700 text-blue-800' : '')} onClick={() => choose(id)}>{label}{counts[id] > 0 && <span className="ml-2 text-sm font-normal">{id === 'lists' ? `${counts[id]} 份` : `已調整 ${counts[id]} 字`}</span>}</button>)}</div>
     </div>

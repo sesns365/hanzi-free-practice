@@ -32,7 +32,7 @@ try:
     pg.locator('label:has-text("課次") select').nth(1).select_option(index=2); pg.wait_for_timeout(500)
     link=pg.locator('p.break-all').inner_text(); step('派課連結', 'book=' in link and 'start=1' in link, link); step('QR', pg.locator('img[alt*="QR"]').count()==1)
     pg.screenshot(path='/home/claude/a2.png',full_page=True)
-    pg.get_by_role('tab',name='設定檔與共用').click()
+    pg.get_by_role('tab',name='備份與移轉').click()
     with pg.expect_download() as d: pg.get_by_role('button',name='匯出設定檔').click()
     path=d.value.path(); exported=json.load(open(path,encoding='utf8'))
     step('匯出設定檔', exported['app']=='hanzi-free-practice' and exported['seatCount']==3 and exported['writingMode']=='guided' and exported['customLists'][0]['chars']=='學習快樂' and len(exported['pinHash'])==8 and '1234' not in json.dumps(exported), str({k:exported[k] for k in ['version','seatCount','defaultBookId','defaultLessonId','lockPractice','simpleMode']}))
